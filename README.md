@@ -15,7 +15,7 @@ This plugin provides functionality to:
 ## Installation
 
 ```bash
-npm install @elizaos/plugin-whatsapp
+bun add @elizaos/plugin-whatsapp
 ```
 
 ## Configuration
@@ -174,19 +174,19 @@ interface WhatsAppTemplate {
 ### Building
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### Testing
 
 ```bash
-npm run test
+bun test
 ```
 
 ### Linting
 
 ```bash
-npm run lint
+bun run lint
 ```
 
 ## Security Best Practices

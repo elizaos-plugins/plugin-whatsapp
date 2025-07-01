@@ -1,6 +1,6 @@
 {
-    "name": "@elizaos-plugins/plugin-whatsapp",
-    "version": "0.25.6-alpha.1",
+    "name": "@elizaos/plugin-whatsapp",
+    "version": "1.0.0",
     "description": "WhatsApp Cloud API plugin",
     "type": "module",
     "main": "dist/index.js",
@@ -20,55 +20,57 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run",
-        "coverage": "vitest run --coverage",
-        "lint": "biome check src/",
-        "lint:fix": "biome check --apply src/",
-        "format": "biome format src/",
-        "format:fix": "biome format --write src/"
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "lint": "prettier --write ./src",
+        "clean": "rm -rf dist .turbo node_modules .turbo-tsconfig.json tsconfig.tsbuildinfo",
+        "format": "prettier --write ./src",
+        "format:check": "prettier --check ./src",
+        "test": "bun test",
+        "test:watch": "bun test --watch",
+        "test:coverage": "bun test --coverage"
     },
     "dependencies": {
+        "@elizaos/core": "latest",
         "axios": "1.7.8"
     },
     "devDependencies": {
-        "@biomejs/biome": "1.5.3",
+        "tsup": "8.3.5",
+        "prettier": "^3.0.0",
+        "bun": "^1.2.15",
+        "@types/bun": "latest",
         "@types/node": "20.17.9",
-        "@typescript-eslint/eslint-plugin": "8.16.0",
-        "@typescript-eslint/parser": "8.16.0",
-        "typescript": "5.6.3",
-        "vitest": "^3.0.0"
+        "typescript": "5.6.3"
     },
     "publishConfig": {
         "access": "public"
     },
     "agentConfig": {
-        "pluginType": "elizaos:client:1.0.0",
+        "pluginType": "elizaos:plugin:1.0.0",
         "pluginParameters": {
             "WHATSAPP_ACCESS_TOKEN": {
                 "type": "string",
-                "minLength": 1,
                 "description": "WhatsApp Cloud API access token",
-                "optional": false
+                "required": true,
+                "sensitive": true
             },
             "WHATSAPP_PHONE_NUMBER_ID": {
                 "type": "string",
-                "minLength": 1,
                 "description": "WhatsApp business phone number ID",
-                "optional": false
+                "required": true,
+                "sensitive": true
             },
             "WHATSAPP_WEBHOOK_TOKEN": {
                 "type": "string",
-                "minLength": 1,
                 "description": "Webhook verification token",
-                "optional": true
+                "required": false,
+                "sensitive": true
             },
             "WHATSAPP_BUSINESS_ID": {
                 "type": "string",
-                "minLength": 1,
                 "description": "Business account ID",
-                "optional": true
+                "required": false,
+                "sensitive": true
             }
         }
     }

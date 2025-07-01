@@ -40,9 +40,7 @@ var MessageHandler = class {
       return response.data;
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(
-          `Failed to send WhatsApp message: ${error.message}`
-        );
+        throw new Error(`Failed to send WhatsApp message: ${error.message}`);
       }
       throw new Error("Failed to send WhatsApp message");
     }
@@ -70,9 +68,7 @@ var WebhookHandler = class {
       }
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(
-          `Failed to send WhatsApp message: ${error.message}`
-        );
+        throw new Error(`Failed to send WhatsApp message: ${error.message}`);
       }
       throw new Error("Failed to send WhatsApp message");
     }
