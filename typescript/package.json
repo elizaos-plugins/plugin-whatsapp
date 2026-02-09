@@ -1,7 +1,7 @@
 {
   "name": "@elizaos/plugin-whatsapp",
   "description": "WhatsApp Cloud API plugin for ElizaOS",
-  "version": "2.0.0-alpha.3",
+  "version": "2.0.0-alpha.4",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -57,5 +57,51 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "agentConfig": {
+    "pluginParameters": {
+      "WHATSAPP_ACCESS_TOKEN": {
+        "type": "string",
+        "description": "Access token for Whatsapp",
+        "required": true,
+        "sensitive": true
+      },
+      "WHATSAPP_PHONE_NUMBER_ID": {
+        "type": "string",
+        "description": "Phone number ID",
+        "required": false,
+        "sensitive": false
+      },
+      "WHATSAPP_WEBHOOK_VERIFY_TOKEN": {
+        "type": "string",
+        "description": "Webhook verification token",
+        "required": false,
+        "sensitive": true
+      },
+      "WHATSAPP_BUSINESS_ACCOUNT_ID": {
+        "type": "string",
+        "description": "Business account ID",
+        "required": false,
+        "sensitive": false
+      },
+      "WHATSAPP_API_VERSION": {
+        "type": "string",
+        "description": "API version string",
+        "required": false,
+        "sensitive": false
+      },
+      "WHATSAPP_DM_POLICY": {
+        "type": "string",
+        "description": "DM policy (e.g. allow, deny, allowlist)",
+        "required": false,
+        "sensitive": false
+      },
+      "WHATSAPP_GROUP_POLICY": {
+        "type": "string",
+        "description": "Group message policy",
+        "required": false,
+        "sensitive": false
+      }
+    }
   }
 }
