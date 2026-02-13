@@ -55,14 +55,15 @@ var WebhookHandler = class {
     this.client = client;
   }
   async handle(event) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     try {
-      if (event.entry?.[0]?.changes?.[0]?.value?.messages) {
+      if ((_e = (_d = (_c = (_b = (_a = event.entry) == null ? void 0 : _a[0]) == null ? void 0 : _b.changes) == null ? void 0 : _c[0]) == null ? void 0 : _d.value) == null ? void 0 : _e.messages) {
         const messages = event.entry[0].changes[0].value.messages;
         for (const message of messages) {
           await this.handleMessage(message);
         }
       }
-      if (event.entry?.[0]?.changes?.[0]?.value?.statuses) {
+      if ((_j = (_i = (_h = (_g = (_f = event.entry) == null ? void 0 : _f[0]) == null ? void 0 : _g.changes) == null ? void 0 : _h[0]) == null ? void 0 : _i.value) == null ? void 0 : _j.statuses) {
         const statuses = event.entry[0].changes[0].value.statuses;
         for (const status of statuses) {
           await this.handleStatus(status);

@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos-plugins/plugin-whatsapp",
+    "name": "@elizaos/plugin-whatsapp",
     "version": "0.25.6-alpha.1",
     "description": "WhatsApp Cloud API plugin",
     "type": "module",
@@ -32,11 +32,16 @@
     "dependencies": {
         "axios": "1.7.8"
     },
+    "peerDependencies": {
+        "@elizaos/core": "*"
+    },
     "devDependencies": {
         "@biomejs/biome": "1.5.3",
+        "@elizaos/core": "latest",
         "@types/node": "20.17.9",
         "@typescript-eslint/eslint-plugin": "8.16.0",
         "@typescript-eslint/parser": "8.16.0",
+        "tsup": "^8.0.0",
         "typescript": "5.6.3",
         "vitest": "^3.0.0"
     },
