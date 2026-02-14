@@ -204,14 +204,14 @@ class AgentRuntime(Protocol):
 # ---------------------------------------------------------------------------
 
 
-def normalize_account_id(account_id: str | None = None) -> str:
+def normalize_account_id(account_id: object | None = None) -> str:
     """Normalize an account ID.
 
     Returns :data:`DEFAULT_ACCOUNT_ID` for ``None``, empty, whitespace-only,
     non-string, or ``"default"`` inputs.  Otherwise returns the trimmed
     lower-cased value.
     """
-    if not account_id:
+    if not account_id or not isinstance(account_id, str):
         return DEFAULT_ACCOUNT_ID
     trimmed = account_id.strip().lower()
     if not trimmed or trimmed == "default":
