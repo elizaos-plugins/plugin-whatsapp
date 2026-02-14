@@ -1,10 +1,12 @@
+import { EventEmitter } from 'events';
 import type { Plugin } from "@elizaos/core";
-import { WhatsAppClient } from "./client";
+import type { IWhatsAppClient } from "./clients/interface";
+import { ClientFactory } from "./clients/factory";
 import type { WhatsAppConfig, WhatsAppMessage, WhatsAppWebhookEvent } from "./types";
 import { MessageHandler, WebhookHandler } from "./handlers";
 
-export class WhatsAppPlugin implements Plugin {
-    private client: WhatsAppClient;
+export class WhatsAppPlugin extends EventEmitter implements Plugin {
+    private client: IWhatsAppClient;
     private messageHandler: MessageHandler;
     private webhookHandler: WebhookHandler;
 
@@ -12,12 +14,28 @@ export class WhatsAppPlugin implements Plugin {
     description: string;
 
     constructor(config: WhatsAppConfig) {
-        this.name = "WhatsApp Cloud API Plugin";
-        this.description =
-            "A plugin for integrating WhatsApp Cloud API with your application.";
-        this.client = new WhatsAppClient(config);
+        super();
+        this.name = "WhatsApp Plugin";
+        this.description = "WhatsApp integration supporting both Cloud API and Baileys";
+
+        this.client = ClientFactory.create(config);
         this.messageHandler = new MessageHandler(this.client);
         this.webhookHandler = new WebhookHandler(this.client);
+
+        // Forward client events
+        this.client.on('message', (msg) => this.emit('message', msg));
+        this.client.on('qr', (qr) => this.emit('qr', qr));
+        this.client.on('ready', () => this.emit('ready'));
+        this.client.on('connection', (status) => this.emit('connection', status));
+        this.client.on('error', (err) => this.emit('error', err));
+    }
+
+    async start(): Promise<void> {
+        await this.client.start();
+    }
+
+    async stop(): Promise<void> {
+        await this.client.stop();
     }
 
     async sendMessage(message: WhatsAppMessage): Promise<any> {
@@ -29,8 +47,16 @@ export class WhatsAppPlugin implements Plugin {
     }
 
     async verifyWebhook(token: string): Promise<boolean> {
+        if (!this.client.verifyWebhook) {
+            throw new Error('verifyWebhook is not supported by this client implementation');
+        }
         return this.client.verifyWebhook(token);
+    }
+
+    getConnectionStatus() {
+        return this.client.getConnectionStatus();
     }
 }
 
 export * from "./types";
+export { ClientFactory } from "./clients/factory";

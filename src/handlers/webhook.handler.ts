@@ -1,8 +1,8 @@
-import type { WhatsAppClient } from "../client";
+import type { IWhatsAppClient } from "../clients/interface";
 import type { WhatsAppWebhookEvent } from "../types";
 
 export class WebhookHandler {
-    constructor(private client: WhatsAppClient) {}
+    constructor(private client: IWhatsAppClient) {}
 
     async handle(event: WhatsAppWebhookEvent): Promise<void> {
         try {

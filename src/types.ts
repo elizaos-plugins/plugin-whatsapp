@@ -1,8 +1,20 @@
-export interface WhatsAppConfig {
+// Discriminated union for config
+export type WhatsAppConfig = BaileysConfig | CloudAPIConfig;
+
+export interface BaileysConfig {
+    authMethod?: 'baileys';
+    authDir: string;
+    sessionPath?: string;
+    printQRInTerminal?: boolean;
+}
+
+export interface CloudAPIConfig {
+    authMethod?: 'cloudapi';
     accessToken: string;
     phoneNumberId: string;
     webhookVerifyToken?: string;
     businessAccountId?: string;
+    apiVersion?: string;
 }
 
 export interface WhatsAppMessage {
@@ -55,4 +67,22 @@ export interface WhatsAppWebhookEvent {
             field: string;
         }>;
     }>;
+}
+
+// Event types
+export interface QRCodeData {
+    terminal: string;      // For console.log
+    dataURL: string;       // For web UI
+    raw: string;           // Raw QR string
+}
+
+export type ConnectionStatus = 'connecting' | 'open' | 'close';
+
+// Unified message format (works for both)
+export interface UnifiedMessage {
+    id: string;
+    from: string;
+    timestamp: number;
+    type: 'text' | 'image' | 'audio' | 'video' | 'document';
+    content: string;
 }

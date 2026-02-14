@@ -1,2 +1,8 @@
 node_modules
 .turbo
+
+# Test files and credentials
+test-*.js
+test-auth/
+*.log
+package-lock.json

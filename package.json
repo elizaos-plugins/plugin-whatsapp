@@ -1,7 +1,7 @@
 {
-    "name": "@elizaos-plugins/plugin-whatsapp",
+    "name": "@elizaos/plugin-whatsapp",
     "version": "0.25.6-alpha.1",
-    "description": "WhatsApp Cloud API plugin",
+    "description": "WhatsApp plugin supporting Cloud API and Baileys (QR code)",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -30,7 +30,11 @@
         "format:fix": "biome format --write src/"
     },
     "dependencies": {
-        "axios": "1.7.8"
+        "@whiskeysockets/baileys": "^7.0.0-rc.9",
+        "axios": "1.7.8",
+        "pino": "^9.5.0",
+        "qrcode": "^1.5.3",
+        "qrcode-terminal": "^0.12.0"
     },
     "devDependencies": {
         "@biomejs/biome": "1.5.3",
@@ -49,14 +53,14 @@
             "WHATSAPP_ACCESS_TOKEN": {
                 "type": "string",
                 "minLength": 1,
-                "description": "WhatsApp Cloud API access token",
-                "optional": false
+                "description": "WhatsApp Cloud API access token (required for Cloud API, not needed for Baileys)",
+                "optional": true
             },
             "WHATSAPP_PHONE_NUMBER_ID": {
                 "type": "string",
                 "minLength": 1,
-                "description": "WhatsApp business phone number ID",
-                "optional": false
+                "description": "WhatsApp business phone number ID (required for Cloud API, not needed for Baileys)",
+                "optional": true
             },
             "WHATSAPP_WEBHOOK_TOKEN": {
                 "type": "string",
@@ -68,6 +72,16 @@
                 "type": "string",
                 "minLength": 1,
                 "description": "Business account ID",
+                "optional": true
+            },
+            "WHATSAPP_AUTH_DIR": {
+                "type": "string",
+                "description": "Directory for Baileys session storage (QR code auth)",
+                "optional": true
+            },
+            "WHATSAPP_PRINT_QR": {
+                "type": "boolean",
+                "description": "Print QR code in terminal (default: true)",
                 "optional": true
             }
         }

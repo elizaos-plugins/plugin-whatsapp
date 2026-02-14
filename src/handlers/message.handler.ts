@@ -1,13 +1,14 @@
-import type { WhatsAppClient } from "../client";
+import type { IWhatsAppClient } from "../clients/interface";
 import type { WhatsAppMessage } from "../types";
 
 export class MessageHandler {
-    constructor(private client: WhatsAppClient) {}
+    constructor(private client: IWhatsAppClient) {}
 
     async send(message: WhatsAppMessage): Promise<any> {
         try {
             const response = await this.client.sendMessage(message);
-            return response.data;
+            // Cloud API returns { data: ... }, Baileys returns the response directly
+            return response?.data ?? response;
         } catch (error: unknown) {
             if (error instanceof Error) {
                 throw new Error(
