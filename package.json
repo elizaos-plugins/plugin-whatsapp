@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos-plugins/plugin-whatsapp",
+    "name": "@elizaos/plugin-whatsapp",
     "version": "0.25.6-alpha.1",
     "description": "WhatsApp plugin supporting Cloud API and Baileys (QR code)",
     "type": "module",
@@ -53,14 +53,14 @@
             "WHATSAPP_ACCESS_TOKEN": {
                 "type": "string",
                 "minLength": 1,
-                "description": "WhatsApp Cloud API access token",
-                "optional": false
+                "description": "WhatsApp Cloud API access token (required for Cloud API, not needed for Baileys)",
+                "optional": true
             },
             "WHATSAPP_PHONE_NUMBER_ID": {
                 "type": "string",
                 "minLength": 1,
-                "description": "WhatsApp business phone number ID",
-                "optional": false
+                "description": "WhatsApp business phone number ID (required for Cloud API, not needed for Baileys)",
+                "optional": true
             },
             "WHATSAPP_WEBHOOK_TOKEN": {
                 "type": "string",

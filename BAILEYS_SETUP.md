@@ -194,10 +194,11 @@ Baileys works with WhatsApp's multi-device feature:
 
 **Solution:**
 ```typescript
+import fs from 'fs';
+
 plugin.on('qr', (qrData) => {
   if (!qrData.terminal) {
     // Fallback: save as image
-    const fs = require('fs');
     const buffer = Buffer.from(qrData.dataURL.split(',')[1], 'base64');
     fs.writeFileSync('qr.png', buffer);
     console.log('QR code saved to qr.png');

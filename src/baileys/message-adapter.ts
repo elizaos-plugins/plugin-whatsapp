@@ -5,9 +5,9 @@ export class MessageAdapter {
   // Convert Baileys message to unified format
   toUnified(msg: proto.IWebMessageInfo): UnifiedMessage {
     return {
-      id: msg.key.id!,
-      from: msg.key.remoteJid!,
-      timestamp: Number(msg.messageTimestamp),
+      id: msg.key?.id ?? '',
+      from: msg.key?.remoteJid ?? '',
+      timestamp: Number(msg.messageTimestamp ?? 0),
       type: this.detectType(msg),
       content: this.extractContent(msg)
     };

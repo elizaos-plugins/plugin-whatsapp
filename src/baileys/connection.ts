@@ -9,6 +9,9 @@ export class BaileysConnection extends EventEmitter {
   private socket?: WASocket;
   private authManager: BaileysAuthManager;
   private connectionStatus: ConnectionStatus = 'close';
+  private reconnecting = false;
+  private reconnectAttempts = 0;
+  private readonly MAX_RECONNECT_ATTEMPTS = 10;
 
   constructor(authManager: BaileysAuthManager) {
     super();
@@ -72,16 +75,42 @@ export class BaileysConnection extends EventEmitter {
         }
 
         if (shouldReconnect && statusCode !== 405) {
-          const delay = isQRTimeout ? 1000 : 3000;
-          console.log(`Reconnecting in ${delay/1000} seconds...`);
-          // Add delay before reconnecting
-          await new Promise(resolve => setTimeout(resolve, delay));
+          // Prevent concurrent reconnection attempts
+          if (this.reconnecting) {
+            return;
+          }
+
+          // Check if max attempts reached
+          if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
+            console.error(`Max reconnection attempts (${this.MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
+            this.emit('error', new Error('Max reconnection attempts reached'));
+            return;
+          }
+
+          this.reconnecting = true;
           try {
+            this.reconnectAttempts++;
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, etc., capped at 30s
+            const baseDelay = isQRTimeout ? 1000 : 3000;
+            const exponentialDelay = Math.min(baseDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
+
+            console.log(`Reconnecting in ${exponentialDelay/1000} seconds... (attempt ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`);
+
+            await new Promise(resolve => setTimeout(resolve, exponentialDelay));
             await this.connect();
           } catch (err) {
             console.error('Reconnection failed:', err);
+            this.emit('error', err);
+          } finally {
+            this.reconnecting = false;
           }
         }
+      }
+
+      // Reset reconnect counter on successful connection
+      if (connection === 'open') {
+        this.reconnectAttempts = 0;
       }
     });
 
@@ -110,10 +139,15 @@ export class BaileysConnection extends EventEmitter {
       this.socket.ev.removeAllListeners();
 
       // Close the WebSocket connection (preserves session for next connection)
-      this.socket.ws.close();
+      if (this.socket.ws) {
+        this.socket.ws.close();
+      }
 
       this.socket = undefined;
       this.connectionStatus = 'close';
+
+      // Emit connection event for consistency
+      this.emit('connection', 'close');
     }
   }
 }

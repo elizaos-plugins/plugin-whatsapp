@@ -2,7 +2,14 @@ import type { WhatsAppConfig } from '../types';
 
 export function detectAuthMethod(config: any): 'baileys' | 'cloudapi' {
   // Explicit method specified
-  if (config.authMethod) return config.authMethod;
+  if (config.authMethod) {
+    if (config.authMethod !== 'baileys' && config.authMethod !== 'cloudapi') {
+      throw new Error(
+        `Invalid authMethod: "${config.authMethod}". Must be either "baileys" or "cloudapi".`
+      );
+    }
+    return config.authMethod;
+  }
 
   // Auto-detect from fields
   if (config.authDir || config.sessionPath || config.authState) {

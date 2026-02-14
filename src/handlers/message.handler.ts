@@ -8,7 +8,7 @@ export class MessageHandler {
         try {
             const response = await this.client.sendMessage(message);
             // Cloud API returns { data: ... }, Baileys returns the response directly
-            return response?.data || response;
+            return response?.data ?? response;
         } catch (error: unknown) {
             if (error instanceof Error) {
                 throw new Error(

@@ -9,8 +9,8 @@ export interface IWhatsAppClient extends EventEmitter {
   // Messaging
   sendMessage(message: WhatsAppMessage): Promise<any>;
 
-  // Webhooks (Cloud API only)
-  verifyWebhook(token: string): Promise<boolean>;
+  // Webhooks (Cloud API only - optional for Baileys)
+  verifyWebhook?(token: string): Promise<boolean>;
 
   // Status
   getConnectionStatus(): ConnectionStatus;

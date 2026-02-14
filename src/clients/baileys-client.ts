@@ -27,14 +27,19 @@ export class BaileysClient extends EventEmitter implements IWhatsAppClient {
   private setupEventForwarding() {
     // QR Code
     this.connection.on('qr', async (qr: string) => {
-      const qrData = await this.qrGenerator.generate(qr);
+      try {
+        const qrData = await this.qrGenerator.generate(qr);
 
-      if (this.config.printQRInTerminal !== false) {
-        console.log('\n=== Scan QR Code ===\n');
-        console.log(qrData.terminal);
+        if (this.config.printQRInTerminal !== false) {
+          console.log('\n=== Scan QR Code ===\n');
+          console.log(qrData.terminal);
+        }
+
+        this.emit('qr', qrData);
+      } catch (err) {
+        console.error('QR code generation failed:', err);
+        this.emit('error', err);
       }
-
-      this.emit('qr', qrData);
     });
 
     // Connection status
@@ -54,6 +59,11 @@ export class BaileysClient extends EventEmitter implements IWhatsAppClient {
         }
       }
     });
+
+    // Error forwarding
+    this.connection.on('error', (err: Error) => {
+      this.emit('error', err);
+    });
   }
 
   async start(): Promise<void> {
@@ -72,10 +82,6 @@ export class BaileysClient extends EventEmitter implements IWhatsAppClient {
 
     const content = this.adapter.toBaileys(message);
     return socket.sendMessage(message.to, content);
-  }
-
-  async verifyWebhook(token: string): Promise<boolean> {
-    throw new Error('verifyWebhook is not supported with Baileys. Use Cloud API instead.');
   }
 
   getConnectionStatus(): ConnectionStatus {

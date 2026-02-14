@@ -10,7 +10,8 @@ export class CloudAPIClient extends EventEmitter implements IWhatsAppClient {
     constructor(config: CloudAPIConfig) {
         super();
         this.config = config;
-        const apiVersion = config.apiVersion || 'v17.0';
+        // Default to v24.0 (current version). Supported range: v19.0 - v24.0
+        const apiVersion = config.apiVersion || 'v24.0';
         this.client = axios.create({
             baseURL: `https://graph.facebook.com/${apiVersion}`,
             headers: {

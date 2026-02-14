@@ -27,6 +27,7 @@ export class WhatsAppPlugin extends EventEmitter implements Plugin {
         this.client.on('qr', (qr) => this.emit('qr', qr));
         this.client.on('ready', () => this.emit('ready'));
         this.client.on('connection', (status) => this.emit('connection', status));
+        this.client.on('error', (err) => this.emit('error', err));
     }
 
     async start(): Promise<void> {
@@ -46,6 +47,9 @@ export class WhatsAppPlugin extends EventEmitter implements Plugin {
     }
 
     async verifyWebhook(token: string): Promise<boolean> {
+        if (!this.client.verifyWebhook) {
+            throw new Error('verifyWebhook is not supported by this client implementation');
+        }
         return this.client.verifyWebhook(token);
     }
 
