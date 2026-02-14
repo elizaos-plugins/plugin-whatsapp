@@ -1,29 +1,54 @@
+import { EventEmitter } from "node:events";
 import type { Plugin } from "@elizaos/core";
 import { sendMessageAction, sendReactionAction } from "./actions";
-import { WhatsAppClient } from "./client";
+import { ClientFactory } from "./clients/factory";
+import type { IWhatsAppClient } from "./clients/interface";
 import { MessageHandler, WebhookHandler } from "./handlers";
 import type {
+  ConnectionStatus,
   WhatsAppConfig,
   WhatsAppMessage,
   WhatsAppMessageResponse,
   WhatsAppWebhookEvent,
 } from "./types";
 
-export class WhatsAppPlugin implements Plugin {
-  private client: WhatsAppClient;
-  private messageHandler: MessageHandler;
-  private webhookHandler: WebhookHandler;
+export class WhatsAppPlugin extends EventEmitter implements Plugin {
+  private readonly client: IWhatsAppClient;
+  private readonly messageHandler: MessageHandler;
+  private readonly webhookHandler: WebhookHandler;
 
   name: string;
   description: string;
   actions = [sendMessageAction, sendReactionAction];
 
   constructor(config: WhatsAppConfig) {
-    this.name = "WhatsApp Cloud API Plugin";
-    this.description = "A plugin for integrating WhatsApp Cloud API with your application.";
-    this.client = new WhatsAppClient(config);
+    super();
+    this.name = "WhatsApp Plugin";
+    this.description = "WhatsApp integration supporting Cloud API and Baileys (QR auth)";
+    this.client = ClientFactory.create(config);
     this.messageHandler = new MessageHandler(this.client);
     this.webhookHandler = new WebhookHandler();
+    this.setupEventForwarding();
+  }
+
+  private setupEventForwarding(): void {
+    this.client.on("message", (payload) => this.emit("message", payload));
+    this.client.on("qr", (payload) => this.emit("qr", payload));
+    this.client.on("ready", () => this.emit("ready"));
+    this.client.on("connection", (status) => this.emit("connection", status));
+    this.client.on("error", (error) => this.emit("error", error));
+  }
+
+  async start(): Promise<void> {
+    await this.client.start();
+  }
+
+  async stop(): Promise<void> {
+    await this.client.stop();
+  }
+
+  getConnectionStatus(): ConnectionStatus {
+    return this.client.getConnectionStatus();
   }
 
   async sendMessage(message: WhatsAppMessage): Promise<WhatsAppMessageResponse> {
@@ -35,16 +60,16 @@ export class WhatsAppPlugin implements Plugin {
   }
 
   async verifyWebhook(token: string): Promise<boolean> {
+    if (!this.client.verifyWebhook) {
+      throw new Error("verifyWebhook is only supported by Cloud API authentication");
+    }
     return this.client.verifyWebhook(token);
   }
 }
 
-/**
- * Standard Eliza plugin export for runtime registration.
- */
 const whatsappPlugin: Plugin = {
   name: "whatsapp",
-  description: "WhatsApp Cloud API integration for ElizaOS",
+  description: "WhatsApp integration for ElizaOS (Cloud API + Baileys)",
   actions: [sendMessageAction, sendReactionAction],
 };
 
@@ -79,9 +104,9 @@ export type {
   WhatsAppAckReactionConfig,
   WhatsAppActionConfig,
   WhatsAppChannelConfig,
-  WhatsAppConfig,
   WhatsAppGroupConfig,
 } from "./config";
+
 // Normalization and utility exports
 export {
   buildWhatsAppUserJid,
@@ -100,4 +125,6 @@ export {
   truncateText,
   WHATSAPP_TEXT_CHUNK_LIMIT,
 } from "./normalize";
+
+export { ClientFactory } from "./clients/factory";
 export * from "./types";

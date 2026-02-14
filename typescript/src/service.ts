@@ -2,9 +2,9 @@ import { createHmac } from "node:crypto";
 import { WhatsAppClient } from "./client";
 import { MessageHandler, WebhookHandler } from "./handlers";
 import type {
+  CloudAPIConfig,
   SendReactionParams,
   SendReactionResult,
-  WhatsAppConfig,
   WhatsAppEventType,
   WhatsAppMessage,
   WhatsAppMessageResponse,
@@ -20,14 +20,14 @@ type EventHandler = (payload: unknown) => void | Promise<void>;
 export class WhatsAppService {
   static readonly serviceType = "whatsapp";
 
-  private config: WhatsAppConfig;
+  private config: CloudAPIConfig;
   private client: WhatsAppClient;
   private messageHandler: MessageHandler;
   private webhookHandler: WebhookHandler;
   private running = false;
   private eventHandlers: Map<WhatsAppEventType, EventHandler[]> = new Map();
 
-  constructor(config: WhatsAppConfig) {
+  constructor(config: CloudAPIConfig) {
     this.config = config;
     this.client = new WhatsAppClient(config);
     this.messageHandler = new MessageHandler(this.client);
@@ -53,7 +53,7 @@ export class WhatsAppService {
       phoneNumberId,
       webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
       businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-      apiVersion: process.env.WHATSAPP_API_VERSION || "v18.0",
+      apiVersion: process.env.WHATSAPP_API_VERSION || "v24.0",
     });
   }
 

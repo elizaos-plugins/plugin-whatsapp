@@ -1,9 +1,19 @@
-export interface WhatsAppConfig {
+export type WhatsAppConfig = CloudAPIConfig | BaileysConfig;
+
+export interface CloudAPIConfig {
+  authMethod?: "cloudapi";
   accessToken: string;
   phoneNumberId: string;
   webhookVerifyToken?: string;
   businessAccountId?: string;
   apiVersion?: string;
+}
+
+export interface BaileysConfig {
+  authMethod?: "baileys";
+  authDir: string;
+  printQRInTerminal?: boolean;
+  sessionPath?: string;
 }
 
 /**
@@ -318,6 +328,22 @@ export interface WhatsAppMessageResponse {
     id: string;
     message_status?: string;
   }>;
+}
+
+export interface QRCodeData {
+  terminal: string;
+  dataURL: string;
+  raw: string;
+}
+
+export type ConnectionStatus = "connecting" | "open" | "close";
+
+export interface UnifiedMessage {
+  id: string;
+  from: string;
+  timestamp: number;
+  type: "text" | "image" | "audio" | "video" | "document";
+  content: string;
 }
 
 /**

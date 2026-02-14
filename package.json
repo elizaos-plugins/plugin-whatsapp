@@ -2,7 +2,7 @@
   "name": "@elizaos/plugin-whatsapp-root",
   "private": true,
   "version": "2.0.0-alpha.1",
-  "description": "WhatsApp Cloud API plugin for ElizaOS",
+  "description": "WhatsApp plugin for ElizaOS (Cloud API + Baileys QR auth)",
   "type": "module",
   "main": "typescript/dist/index.js",
   "module": "typescript/dist/index.js",
@@ -59,14 +59,29 @@
       "WHATSAPP_ACCESS_TOKEN": {
         "type": "string",
         "minLength": 1,
-        "description": "WhatsApp Cloud API access token",
-        "optional": false
+        "description": "WhatsApp Cloud API access token (required for cloudapi auth)",
+        "optional": true
       },
       "WHATSAPP_PHONE_NUMBER_ID": {
         "type": "string",
         "minLength": 1,
-        "description": "WhatsApp business phone number ID",
-        "optional": false
+        "description": "WhatsApp business phone number ID (required for cloudapi auth)",
+        "optional": true
+      },
+      "WHATSAPP_AUTH_METHOD": {
+        "type": "string",
+        "description": "Authentication method: cloudapi or baileys",
+        "optional": true
+      },
+      "WHATSAPP_AUTH_DIR": {
+        "type": "string",
+        "description": "Directory used to persist Baileys session files (required for baileys auth)",
+        "optional": true
+      },
+      "WHATSAPP_PRINT_QR": {
+        "type": "boolean",
+        "description": "Print QR code in terminal when using Baileys auth",
+        "optional": true
       },
       "WHATSAPP_WEBHOOK_TOKEN": {
         "type": "string",

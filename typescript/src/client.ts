@@ -1,8 +1,11 @@
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import { EventEmitter } from "node:events";
+import type { IWhatsAppClient } from "./clients/interface";
 import type {
+  CloudAPIConfig,
+  ConnectionStatus,
   SendReactionParams,
   SendReactionResult,
-  WhatsAppConfig,
   WhatsAppInteractiveMessage,
   WhatsAppLocationMessage,
   WhatsAppMediaMessage,
@@ -11,13 +14,15 @@ import type {
   WhatsAppReactionMessage,
 } from "./types";
 
-const DEFAULT_API_VERSION = "v18.0";
+const DEFAULT_API_VERSION = "v24.0";
 
-export class WhatsAppClient {
+export class WhatsAppClient extends EventEmitter implements IWhatsAppClient {
   private client: AxiosInstance;
-  private config: WhatsAppConfig;
+  private config: CloudAPIConfig;
+  private connectionStatus: ConnectionStatus = "close";
 
-  constructor(config: WhatsAppConfig) {
+  constructor(config: CloudAPIConfig) {
+    super();
     this.config = config;
     const apiVersion = config.apiVersion || DEFAULT_API_VERSION;
 
@@ -28,6 +33,21 @@ export class WhatsAppClient {
         "Content-Type": "application/json",
       },
     });
+  }
+
+  async start(): Promise<void> {
+    this.connectionStatus = "open";
+    this.emit("connection", "open");
+    this.emit("ready");
+  }
+
+  async stop(): Promise<void> {
+    this.connectionStatus = "close";
+    this.emit("connection", "close");
+  }
+
+  getConnectionStatus(): ConnectionStatus {
+    return this.connectionStatus;
   }
 
   /**

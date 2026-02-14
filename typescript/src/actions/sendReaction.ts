@@ -55,7 +55,7 @@ export const sendReactionAction: Action = {
     // Get WhatsApp settings
     const accessToken = runtime.getSetting("WHATSAPP_ACCESS_TOKEN") as string;
     const phoneNumberId = runtime.getSetting("WHATSAPP_PHONE_NUMBER_ID") as string;
-    const apiVersion = (runtime.getSetting("WHATSAPP_API_VERSION") as string) || "v18.0";
+    const apiVersion = (runtime.getSetting("WHATSAPP_API_VERSION") as string) || "v24.0";
 
     if (!accessToken || !phoneNumberId) {
       if (callback) {

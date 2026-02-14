@@ -1,12 +1,22 @@
 import { isValidWhatsAppNumber } from "../normalize";
 import type { WhatsAppConfig, WhatsAppMessage, WhatsAppTemplate } from "../types";
+import { detectAuthMethod } from "./config-detector";
 
 export function validateConfig(config: WhatsAppConfig): void {
-  if (!config.accessToken) {
-    throw new Error("WhatsApp access token is required");
+  const authMethod = detectAuthMethod(config);
+
+  if (authMethod === "baileys") {
+    if (!("authDir" in config) || !config.authDir) {
+      throw new Error("Baileys authDir is required");
+    }
+    return;
   }
-  if (!config.phoneNumberId) {
-    throw new Error("WhatsApp phone number ID is required");
+
+  if (!("accessToken" in config) || !config.accessToken) {
+    throw new Error("WhatsApp access token is required for Cloud API auth");
+  }
+  if (!("phoneNumberId" in config) || !config.phoneNumberId) {
+    throw new Error("WhatsApp phone number ID is required for Cloud API auth");
   }
 }
 

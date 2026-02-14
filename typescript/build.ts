@@ -14,7 +14,7 @@ async function buildAll(): Promise<boolean> {
     packageName: "@elizaos/plugin-whatsapp",
     buildOptions: {
       entrypoints: ["index.ts"],
-      outdir: "../dist",
+      outdir: "dist",
       target: "node",
       format: "esm",
       external: [
@@ -28,6 +28,11 @@ async function buildAll(): Promise<boolean> {
         "@elizaos/core",
         // Other externals
         "axios",
+        "@hapi/boom",
+        "@whiskeysockets/baileys",
+        "pino",
+        "qrcode",
+        "qrcode-terminal",
       ],
       sourcemap: true,
       minify: false,

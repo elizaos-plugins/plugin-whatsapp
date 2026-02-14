@@ -1,6 +1,6 @@
 # plugin-whatsapp
 
-WhatsApp Cloud API plugin for ElizaOS. Provides comprehensive integration with the WhatsApp Business Cloud API, enabling agents to send and receive messages, media, reactions, and interactive content via WhatsApp.
+WhatsApp plugin for ElizaOS. Supports both WhatsApp Cloud API and Baileys (QR authentication), enabling agents to send and receive messages, media, reactions, and interactive content via WhatsApp.
 
 ## Features
 
@@ -11,6 +11,7 @@ WhatsApp Cloud API plugin for ElizaOS. Provides comprehensive integration with t
 - **Location Messages**: Share location data with name and address
 - **Template Messages**: Send pre-approved message templates
 - **Webhooks**: Handle incoming messages and status updates
+- **Baileys QR Auth**: Connect personal WhatsApp accounts with QR login + session persistence
 - **Message Status**: Track sent, delivered, read, and failed statuses
 - **Media Downloads**: Retrieve media URLs for incoming messages
 - **Multi-language Support**: TypeScript, Python, and Rust implementations
@@ -48,7 +49,10 @@ elizaos-plugin-whatsapp = "2.0.0-alpha.1"
 | `WHATSAPP_PHONE_NUMBER_ID` | Yes | Phone number ID from WhatsApp Business API |
 | `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | No | Token for webhook verification |
 | `WHATSAPP_BUSINESS_ACCOUNT_ID` | No | Business account ID |
-| `WHATSAPP_API_VERSION` | No | Graph API version (default: v18.0) |
+| `WHATSAPP_API_VERSION` | No | Graph API version (default: v24.0) |
+| `WHATSAPP_AUTH_METHOD` | No | `cloudapi` or `baileys` (auto-detected if omitted) |
+| `WHATSAPP_AUTH_DIR` | No | Path for Baileys multi-file auth state |
+| `WHATSAPP_PRINT_QR` | No | Print QR in terminal for Baileys auth (default: true) |
 
 ### TypeScript Configuration
 
@@ -59,7 +63,19 @@ const plugin = new WhatsAppPlugin({
     accessToken: process.env.WHATSAPP_ACCESS_TOKEN!,
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
     webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
-    apiVersion: 'v18.0',
+    apiVersion: 'v24.0',
+});
+```
+
+### TypeScript Configuration (Baileys / QR)
+
+```typescript
+import { WhatsAppPlugin } from "@elizaos/plugin-whatsapp";
+
+const plugin = new WhatsAppPlugin({
+  authMethod: "baileys",
+  authDir: "./whatsapp-auth",
+  printQRInTerminal: true,
 });
 ```
 
@@ -78,7 +94,7 @@ config = WhatsAppConfig(
     access_token="your_token",
     phone_number_id="your_phone_id",
     webhook_verify_token="optional_verify_token",
-    api_version="v18.0",
+    api_version="v24.0",
 )
 service = WhatsAppService(config)
 ```
