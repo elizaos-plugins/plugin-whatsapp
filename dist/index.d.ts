@@ -83,7 +83,7 @@ interface IWhatsAppClient extends EventEmitter {
     start(): Promise<void>;
     stop(): Promise<void>;
     sendMessage(message: WhatsAppMessage): Promise<any>;
-    verifyWebhook(token: string): Promise<boolean>;
+    verifyWebhook?(token: string): Promise<boolean>;
     getConnectionStatus(): ConnectionStatus;
 }
 

@@ -37,6 +37,9 @@ var BaileysConnection = class extends EventEmitter {
   socket;
   authManager;
   connectionStatus = "close";
+  reconnecting = false;
+  reconnectAttempts = 0;
+  MAX_RECONNECT_ATTEMPTS = 10;
   constructor(authManager) {
     super();
     this.authManager = authManager;
@@ -83,15 +86,32 @@ var BaileysConnection = class extends EventEmitter {
           console.error("Connection error:", lastDisconnect.error.message || lastDisconnect.error);
         }
         if (shouldReconnect && statusCode !== 405) {
-          const delay = isQRTimeout ? 1e3 : 3e3;
-          console.log(`Reconnecting in ${delay / 1e3} seconds...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          if (this.reconnecting) {
+            return;
+          }
+          if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
+            console.error(`Max reconnection attempts (${this.MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
+            this.emit("error", new Error("Max reconnection attempts reached"));
+            return;
+          }
+          this.reconnecting = true;
           try {
+            this.reconnectAttempts++;
+            const baseDelay = isQRTimeout ? 1e3 : 3e3;
+            const exponentialDelay = Math.min(baseDelay * Math.pow(2, this.reconnectAttempts - 1), 3e4);
+            console.log(`Reconnecting in ${exponentialDelay / 1e3} seconds... (attempt ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`);
+            await new Promise((resolve) => setTimeout(resolve, exponentialDelay));
             await this.connect();
           } catch (err) {
             console.error("Reconnection failed:", err);
+            this.emit("error", err);
+          } finally {
+            this.reconnecting = false;
           }
         }
+      }
+      if (connection === "open") {
+        this.reconnectAttempts = 0;
       }
     });
     this.socket.ev.on("creds.update", async () => {
@@ -110,9 +130,12 @@ var BaileysConnection = class extends EventEmitter {
   async disconnect() {
     if (this.socket) {
       this.socket.ev.removeAllListeners();
-      this.socket.ws.close();
+      if (this.socket.ws) {
+        this.socket.ws.close();
+      }
       this.socket = void 0;
       this.connectionStatus = "close";
+      this.emit("connection", "close");
     }
   }
 };
@@ -141,10 +164,11 @@ var QRCodeGenerator = class {
 var MessageAdapter = class {
   // Convert Baileys message to unified format
   toUnified(msg) {
+    var _a, _b;
     return {
-      id: msg.key.id,
-      from: msg.key.remoteJid,
-      timestamp: Number(msg.messageTimestamp),
+      id: ((_a = msg.key) == null ? void 0 : _a.id) ?? "",
+      from: ((_b = msg.key) == null ? void 0 : _b.remoteJid) ?? "",
+      timestamp: Number(msg.messageTimestamp ?? 0),
       type: this.detectType(msg),
       content: this.extractContent(msg)
     };
@@ -190,12 +214,17 @@ var BaileysClient = class extends EventEmitter2 {
   }
   setupEventForwarding() {
     this.connection.on("qr", async (qr) => {
-      const qrData = await this.qrGenerator.generate(qr);
-      if (this.config.printQRInTerminal !== false) {
-        console.log("\n=== Scan QR Code ===\n");
-        console.log(qrData.terminal);
+      try {
+        const qrData = await this.qrGenerator.generate(qr);
+        if (this.config.printQRInTerminal !== false) {
+          console.log("\n=== Scan QR Code ===\n");
+          console.log(qrData.terminal);
+        }
+        this.emit("qr", qrData);
+      } catch (err) {
+        console.error("QR code generation failed:", err);
+        this.emit("error", err);
       }
-      this.emit("qr", qrData);
     });
     this.connection.on("connection", (status) => {
       this.emit("connection", status);
@@ -210,6 +239,9 @@ var BaileysClient = class extends EventEmitter2 {
           this.emit("message", unified);
         }
       }
+    });
+    this.connection.on("error", (err) => {
+      this.emit("error", err);
     });
   }
   async start() {
@@ -226,9 +258,6 @@ var BaileysClient = class extends EventEmitter2 {
     const content = this.adapter.toBaileys(message);
     return socket.sendMessage(message.to, content);
   }
-  async verifyWebhook(token) {
-    throw new Error("verifyWebhook is not supported with Baileys. Use Cloud API instead.");
-  }
   getConnectionStatus() {
     return this.connection.getStatus();
   }
@@ -243,7 +272,7 @@ var CloudAPIClient = class extends EventEmitter3 {
   constructor(config) {
     super();
     this.config = config;
-    const apiVersion = config.apiVersion || "v17.0";
+    const apiVersion = config.apiVersion || "v24.0";
     this.client = axios.create({
       baseURL: `https://graph.facebook.com/${apiVersion}`,
       headers: {
@@ -278,7 +307,14 @@ var CloudAPIClient = class extends EventEmitter3 {
 
 // src/utils/config-detector.ts
 function detectAuthMethod(config) {
-  if (config.authMethod) return config.authMethod;
+  if (config.authMethod) {
+    if (config.authMethod !== "baileys" && config.authMethod !== "cloudapi") {
+      throw new Error(
+        `Invalid authMethod: "${config.authMethod}". Must be either "baileys" or "cloudapi".`
+      );
+    }
+    return config.authMethod;
+  }
   if (config.authDir || config.sessionPath || config.authState) {
     return "baileys";
   }
@@ -310,7 +346,7 @@ var MessageHandler = class {
   async send(message) {
     try {
       const response = await this.client.sendMessage(message);
-      return (response == null ? void 0 : response.data) || response;
+      return (response == null ? void 0 : response.data) ?? response;
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(
@@ -377,6 +413,7 @@ var WhatsAppPlugin = class extends EventEmitter4 {
     this.client.on("qr", (qr) => this.emit("qr", qr));
     this.client.on("ready", () => this.emit("ready"));
     this.client.on("connection", (status) => this.emit("connection", status));
+    this.client.on("error", (err) => this.emit("error", err));
   }
   async start() {
     await this.client.start();
@@ -391,6 +428,9 @@ var WhatsAppPlugin = class extends EventEmitter4 {
     return this.webhookHandler.handle(event);
   }
   async verifyWebhook(token) {
+    if (!this.client.verifyWebhook) {
+      throw new Error("verifyWebhook is not supported by this client implementation");
+    }
     return this.client.verifyWebhook(token);
   }
   getConnectionStatus() {

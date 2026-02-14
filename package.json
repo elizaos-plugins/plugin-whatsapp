@@ -36,11 +36,16 @@
         "qrcode": "^1.5.3",
         "qrcode-terminal": "^0.12.0"
     },
+    "peerDependencies": {
+        "@elizaos/core": "*"
+    },
     "devDependencies": {
         "@biomejs/biome": "1.5.3",
+        "@elizaos/core": "latest",
         "@types/node": "20.17.9",
         "@typescript-eslint/eslint-plugin": "8.16.0",
         "@typescript-eslint/parser": "8.16.0",
+        "tsup": "^8.0.0",
         "typescript": "5.6.3",
         "vitest": "^3.0.0"
     },
