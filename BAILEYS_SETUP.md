@@ -64,7 +64,7 @@ plugin.on('message', (msg) => {
 
 Baileys stores authentication credentials in the `authDir` folder:
 
-```
+```text
 whatsapp-auth/
   ├── creds.json          # Authentication credentials
   └── keys/               # Encryption keys

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Plugin } from '@elizaos/core';
+import { Service, IAgentRuntime, Plugin } from '@elizaos/core';
 
 type WhatsAppConfig = BaileysConfig | CloudAPIConfig;
 interface BaileysConfig {
@@ -91,6 +91,17 @@ declare class ClientFactory {
     static create(config: WhatsAppConfig): IWhatsAppClient;
 }
 
+declare class WhatsAppConnectorService extends Service {
+    static serviceType: string;
+    capabilityDescription: string;
+    private plugin;
+    static start(runtime: IAgentRuntime): Promise<WhatsAppConnectorService>;
+    stop(): Promise<void>;
+    private resolveConfig;
+    private initialize;
+    private handleIncomingMessage;
+}
+
 declare class WhatsAppPlugin extends EventEmitter implements Plugin {
     private client;
     private messageHandler;
@@ -106,4 +117,6 @@ declare class WhatsAppPlugin extends EventEmitter implements Plugin {
     getConnectionStatus(): ConnectionStatus;
 }
 
-export { type BaileysConfig, ClientFactory, type CloudAPIConfig, type ConnectionStatus, type QRCodeData, type UnifiedMessage, type WhatsAppConfig, type WhatsAppMessage, WhatsAppPlugin, type WhatsAppTemplate, type WhatsAppWebhookEvent };
+declare const whatsappPlugin: Plugin;
+
+export { type BaileysConfig, ClientFactory, type CloudAPIConfig, type ConnectionStatus, type QRCodeData, type UnifiedMessage, type WhatsAppConfig, WhatsAppConnectorService, type WhatsAppMessage, WhatsAppPlugin, type WhatsAppTemplate, type WhatsAppWebhookEvent, whatsappPlugin as default };

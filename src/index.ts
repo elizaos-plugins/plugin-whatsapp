@@ -4,6 +4,7 @@ import type { IWhatsAppClient } from "./clients/interface";
 import { ClientFactory } from "./clients/factory";
 import type { WhatsAppConfig, WhatsAppMessage, WhatsAppWebhookEvent } from "./types";
 import { MessageHandler, WebhookHandler } from "./handlers";
+import { WhatsAppConnectorService } from "./service";
 
 export class WhatsAppPlugin extends EventEmitter implements Plugin {
     private client: IWhatsAppClient;
@@ -60,3 +61,12 @@ export class WhatsAppPlugin extends EventEmitter implements Plugin {
 
 export * from "./types";
 export { ClientFactory } from "./clients/factory";
+export { WhatsAppConnectorService } from "./service";
+
+const whatsappPlugin: Plugin = {
+  name: "whatsapp",
+  description: "WhatsApp connector for ElizaOS — supports Baileys (QR code) and Cloud API",
+  services: [WhatsAppConnectorService],
+};
+
+export default whatsappPlugin;

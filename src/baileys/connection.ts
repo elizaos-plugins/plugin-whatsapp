@@ -21,6 +21,13 @@ export class BaileysConnection extends EventEmitter {
   async connect() {
     const state = await this.authManager.initialize();
 
+    // Remove listeners from previous socket to prevent stale handlers
+    if (this.socket?.ev) {
+      this.socket.ev.removeAllListeners('connection.update');
+      this.socket.ev.removeAllListeners('creds.update');
+      this.socket.ev.removeAllListeners('messages.upsert');
+    }
+
     this.socket = makeWASocket({
       auth: state,
       printQRInTerminal: false,
@@ -136,7 +143,9 @@ export class BaileysConnection extends EventEmitter {
   async disconnect() {
     if (this.socket) {
       // Remove all event listeners from the Baileys event emitter
-      this.socket.ev.removeAllListeners();
+      this.socket.ev.removeAllListeners('connection.update');
+      this.socket.ev.removeAllListeners('creds.update');
+      this.socket.ev.removeAllListeners('messages.upsert');
 
       // Close the WebSocket connection (preserves session for next connection)
       if (this.socket.ws) {

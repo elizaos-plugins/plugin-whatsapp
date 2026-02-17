@@ -45,7 +45,13 @@ var BaileysConnection = class extends EventEmitter {
     this.authManager = authManager;
   }
   async connect() {
+    var _a;
     const state = await this.authManager.initialize();
+    if ((_a = this.socket) == null ? void 0 : _a.ev) {
+      this.socket.ev.removeAllListeners("connection.update");
+      this.socket.ev.removeAllListeners("creds.update");
+      this.socket.ev.removeAllListeners("messages.upsert");
+    }
     this.socket = makeWASocket({
       auth: state,
       printQRInTerminal: false,
@@ -129,7 +135,9 @@ var BaileysConnection = class extends EventEmitter {
   }
   async disconnect() {
     if (this.socket) {
-      this.socket.ev.removeAllListeners();
+      this.socket.ev.removeAllListeners("connection.update");
+      this.socket.ev.removeAllListeners("creds.update");
+      this.socket.ev.removeAllListeners("messages.upsert");
       if (this.socket.ws) {
         this.socket.ws.close();
       }
@@ -395,6 +403,152 @@ var WebhookHandler = class {
   }
 };
 
+// src/service.ts
+import {
+  Service,
+  EventType,
+  ChannelType,
+  logger,
+  stringToUuid
+} from "@elizaos/core";
+var SOURCE = "whatsapp";
+function getSetting(runtime, key) {
+  const v = runtime.getSetting(key);
+  if (v !== null && v !== void 0) return String(v);
+  const e = process.env[key];
+  return e !== void 0 ? e : null;
+}
+var WhatsAppConnectorService = class _WhatsAppConnectorService extends Service {
+  static serviceType = "whatsapp_connector";
+  capabilityDescription = "Connects the agent to WhatsApp using Baileys (QR code) or Cloud API";
+  plugin = null;
+  static async start(runtime) {
+    const service = new _WhatsAppConnectorService(runtime);
+    await service.initialize();
+    return service;
+  }
+  async stop() {
+    if (this.plugin) {
+      await this.plugin.stop();
+      this.plugin = null;
+      logger.info("[WhatsApp] Disconnected");
+    }
+  }
+  resolveConfig() {
+    const runtime = this.runtime;
+    const authDir = getSetting(runtime, "WHATSAPP_AUTH_DIR");
+    if (authDir) {
+      return { authDir, printQRInTerminal: true };
+    }
+    const accessToken = getSetting(runtime, "WHATSAPP_ACCESS_TOKEN");
+    const phoneNumberId = getSetting(runtime, "WHATSAPP_PHONE_NUMBER_ID");
+    if (accessToken && phoneNumberId) {
+      return {
+        accessToken,
+        phoneNumberId,
+        webhookVerifyToken: getSetting(runtime, "WHATSAPP_WEBHOOK_VERIFY_TOKEN") ?? void 0,
+        businessAccountId: getSetting(runtime, "WHATSAPP_BUSINESS_ID") ?? void 0,
+        apiVersion: getSetting(runtime, "WHATSAPP_API_VERSION") ?? void 0
+      };
+    }
+    return null;
+  }
+  async initialize() {
+    const runtime = this.runtime;
+    const config = this.resolveConfig();
+    if (!config) {
+      logger.warn(
+        "[WhatsApp] No configuration found (set WHATSAPP_AUTH_DIR for Baileys or WHATSAPP_ACCESS_TOKEN + WHATSAPP_PHONE_NUMBER_ID for Cloud API) \u2014 connector disabled"
+      );
+      return;
+    }
+    this.plugin = new WhatsAppPlugin(config);
+    this.plugin.on("qr", (qrData) => {
+      logger.info("[WhatsApp] Scan the QR code below with your phone:");
+      process.stdout.write("\n" + (qrData.terminal ?? String(qrData)) + "\n\n");
+    });
+    this.plugin.on("ready", () => {
+      logger.info("[WhatsApp] Connected!");
+    });
+    this.plugin.on("connection", (status) => {
+      logger.info(`[WhatsApp] Connection status: ${status}`);
+    });
+    this.plugin.on("error", (err) => {
+      logger.error("[WhatsApp] Error:", err.message);
+    });
+    this.plugin.on("message", async (msg) => {
+      await this.handleIncomingMessage(msg);
+    });
+    runtime.registerSendHandler(
+      SOURCE,
+      async (_rt, target, content) => {
+        if (!this.plugin || !content.text) return;
+        const to = target.channelId ?? (target.entityId ? String(target.entityId) : null);
+        if (!to) return;
+        await this.plugin.sendMessage({
+          type: "text",
+          to,
+          content: content.text
+        });
+      }
+    );
+    await this.plugin.start();
+    logger.info("[WhatsApp] Connector service started");
+  }
+  async handleIncomingMessage(msg) {
+    const runtime = this.runtime;
+    if (!msg.content || msg.type !== "text") return;
+    const entityId = stringToUuid(`whatsapp-entity-${msg.from}`);
+    const roomId = stringToUuid(`whatsapp-room-${msg.from}-${runtime.agentId}`);
+    const worldId = stringToUuid(`whatsapp-world-${runtime.agentId}`);
+    await runtime.ensureWorldExists({
+      id: worldId,
+      agentId: runtime.agentId,
+      name: "WhatsApp",
+      metadata: { source: SOURCE }
+    });
+    await runtime.ensureConnection({
+      entityId,
+      roomId,
+      worldId,
+      userName: msg.from,
+      name: msg.from,
+      source: SOURCE,
+      type: ChannelType.DM,
+      channelId: msg.from
+    });
+    const memory = {
+      id: stringToUuid(`whatsapp-msg-${msg.id}`),
+      agentId: runtime.agentId,
+      entityId,
+      roomId,
+      content: {
+        text: msg.content,
+        source: SOURCE,
+        channelId: msg.from
+      },
+      createdAt: msg.timestamp ? msg.timestamp * 1e3 : Date.now(),
+      metadata: { type: "message", timestamp: Date.now(), scope: "private" }
+    };
+    await runtime.createMemory(memory, "messages");
+    await runtime.emitEvent(EventType.MESSAGE_RECEIVED, {
+      runtime,
+      message: memory,
+      source: SOURCE,
+      callback: async (response) => {
+        if (response.text && this.plugin) {
+          await this.plugin.sendMessage({
+            type: "text",
+            to: msg.from,
+            content: response.text
+          });
+        }
+        return [];
+      }
+    });
+  }
+};
+
 // src/index.ts
 var WhatsAppPlugin = class extends EventEmitter4 {
   client;
@@ -437,8 +591,16 @@ var WhatsAppPlugin = class extends EventEmitter4 {
     return this.client.getConnectionStatus();
   }
 };
+var whatsappPlugin = {
+  name: "whatsapp",
+  description: "WhatsApp connector for ElizaOS \u2014 supports Baileys (QR code) and Cloud API",
+  services: [WhatsAppConnectorService]
+};
+var index_default = whatsappPlugin;
 export {
   ClientFactory,
-  WhatsAppPlugin
+  WhatsAppConnectorService,
+  WhatsAppPlugin,
+  index_default as default
 };
 //# sourceMappingURL=index.js.map
