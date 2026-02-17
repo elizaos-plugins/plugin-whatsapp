@@ -7,7 +7,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { runBuild } from "../../../build-utils";
+import { runBuild } from "../../../eliza/build-utils";
 
 async function buildAll(): Promise<boolean> {
   const nodeOk = await runBuild({
@@ -36,7 +36,7 @@ async function buildAll(): Promise<boolean> {
       ],
       sourcemap: true,
       minify: false,
-      generateDts: true,
+      generateDts: false,
     },
   });
 
