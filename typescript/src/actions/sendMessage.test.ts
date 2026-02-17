@@ -12,11 +12,11 @@ describe("sendMessageAction", () => {
     const mockRuntime = {} as IAgentRuntime;
 
     const whatsappMessage = {
-      content: { source: "whatsapp" },
+      content: { source: "whatsapp", text: "send whatsapp message to +14155552671" },
     } as Memory;
 
     const telegramMessage = {
-      content: { source: "telegram" },
+      content: { source: "telegram", text: "send whatsapp message to +14155552671" },
     } as Memory;
 
     expect(await sendMessageAction.validate(mockRuntime, whatsappMessage)).toBe(true);
