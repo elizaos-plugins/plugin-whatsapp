@@ -14,6 +14,14 @@ import type { WhatsAppConfig, UnifiedMessage } from "./types";
 
 const SOURCE = "whatsapp";
 
+/** Read a setting from runtime (character settings) with fallback to process.env */
+function getSetting(runtime: IAgentRuntime, key: string): string | null {
+  const v = runtime.getSetting(key);
+  if (v !== null && v !== undefined) return String(v);
+  const e = process.env[key];
+  return e !== undefined ? e : null;
+}
+
 export class WhatsAppConnectorService extends Service {
   static serviceType = "whatsapp_connector";
   capabilityDescription =
@@ -41,24 +49,21 @@ export class WhatsAppConnectorService extends Service {
     const runtime = this.runtime;
 
     // Baileys (QR code) preferred when authDir is set
-    const authDir = runtime.getSetting("WHATSAPP_AUTH_DIR");
+    const authDir = getSetting(runtime, "WHATSAPP_AUTH_DIR");
     if (authDir) {
-      return { authDir: String(authDir), printQRInTerminal: true };
+      return { authDir, printQRInTerminal: true };
     }
 
     // Cloud API
-    const accessToken = runtime.getSetting("WHATSAPP_ACCESS_TOKEN");
-    const phoneNumberId = runtime.getSetting("WHATSAPP_PHONE_NUMBER_ID");
+    const accessToken = getSetting(runtime, "WHATSAPP_ACCESS_TOKEN");
+    const phoneNumberId = getSetting(runtime, "WHATSAPP_PHONE_NUMBER_ID");
     if (accessToken && phoneNumberId) {
-      const webhookVerifyToken = runtime.getSetting("WHATSAPP_WEBHOOK_VERIFY_TOKEN");
-      const businessAccountId = runtime.getSetting("WHATSAPP_BUSINESS_ID");
-      const apiVersion = runtime.getSetting("WHATSAPP_API_VERSION");
       return {
-        accessToken: String(accessToken),
-        phoneNumberId: String(phoneNumberId),
-        webhookVerifyToken: webhookVerifyToken ? String(webhookVerifyToken) : undefined,
-        businessAccountId: businessAccountId ? String(businessAccountId) : undefined,
-        apiVersion: apiVersion ? String(apiVersion) : undefined,
+        accessToken,
+        phoneNumberId,
+        webhookVerifyToken: getSetting(runtime, "WHATSAPP_WEBHOOK_VERIFY_TOKEN") ?? undefined,
+        businessAccountId: getSetting(runtime, "WHATSAPP_BUSINESS_ID") ?? undefined,
+        apiVersion: getSetting(runtime, "WHATSAPP_API_VERSION") ?? undefined,
       };
     }
 
